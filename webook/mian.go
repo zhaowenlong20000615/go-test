@@ -3,19 +3,38 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go-test/webook/internal/repository"
+	"go-test/webook/internal/repository/dao"
+	"go-test/webook/internal/service"
 	"go-test/webook/internal/web"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 )
 
 func main() {
-	serve := gin.Default()
-	serve.Use(func(context *gin.Context) {
-		println("第一个中间件！")
-	})
-	serve.Use(func(context *gin.Context) {
-		println("第二个中间件！")
-	})
+	db := initDB()
+	server := initWebServer()
+	initUser(server, db)
+	server.Run(":8080")
+}
+
+func initDB() *gorm.DB {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13306)/webook"))
+	if err != nil {
+		panic(err)
+	}
+	err = dao.InitTable(db)
+	if err != nil {
+		panic(err)
+	}
+	return db
+}
+
+func initWebServer() *gin.Engine {
+	serve := web.RegisterRouters()
+
 	serve.Use(cors.New(cors.Config{
 		//AllowMethods:     []string{"PUT", "PATCH"},
 		AllowHeaders:     []string{"Content-Type"},
@@ -28,6 +47,13 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-	web.RegisterRouters(serve)
-	serve.Run(":8080")
+	return serve
+}
+
+func initUser(server *gin.Engine, db *gorm.DB) {
+	d := dao.NewUserDAO(db)
+	r := repository.NewUserRepository(d)
+	s := service.NewUserService(r)
+	h := web.NewUserHandler(s)
+	h.RegisterUser(server)
 }
