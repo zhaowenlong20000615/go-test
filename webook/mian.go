@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	serve := gin.Default()
+	serve := web.RegisterRouters()
 	serve.Use(func(context *gin.Context) {
 		println("第一个中间件！")
 	})
@@ -28,6 +28,5 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-	web.RegisterRouters(serve)
 	serve.Run(":8080")
 }
