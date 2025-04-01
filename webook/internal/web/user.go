@@ -1,8 +1,8 @@
 package web
 
 import (
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"go-test/webook/internal/domain"
 	"go-test/webook/internal/service"
@@ -78,8 +78,9 @@ func (u *UserHandler) addUser(ctx *gin.Context) {
 	})
 	if err != nil {
 		ctx.String(http.StatusOK, err.Error())
+		return
 	}
-	fmt.Printf("user:%#v\n", user)
+
 	ctx.String(http.StatusOK, "注册成功！")
 }
 
@@ -97,5 +98,26 @@ func (u *UserHandler) deleteUser(ctx *gin.Context) {
 }
 
 func (u *UserHandler) login(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	user, err := u.svc.Login(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
 
+	session := sessions.Default(ctx)
+	session.Set("userId", user.Id)
+	session.Save()
+	ctx.String(http.StatusOK, "登录成功！")
 }

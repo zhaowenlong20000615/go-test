@@ -2,6 +2,8 @@ package dao
 
 import (
 	"context"
+	"github.com/go-sql-driver/mysql"
+	"go-test/webook/internal/constants"
 	"gorm.io/gorm"
 	"time"
 )
@@ -20,7 +22,19 @@ func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
 	u.Ctime = now
 	u.Utime = now
-	return dao.db.WithContext(ctx).Create(&u).Error
+	err := dao.db.WithContext(ctx).Create(&u).Error
+	if mysqlError, ok := err.(*mysql.MySQLError); ok {
+		if mysqlError.Number == 1062 {
+			return constants.ErrDuplicateEmail
+		}
+	}
+	return err
+}
+
+func (dao *UserDAO) FindByEmail(ctx context.Context, email string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	return u, err
 }
 
 type User struct {
