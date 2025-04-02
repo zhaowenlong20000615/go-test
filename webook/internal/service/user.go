@@ -36,5 +36,26 @@ func (svc *UserService) Login(ctx context.Context, u domain.User) (domain.User, 
 	if err != nil {
 		return domain.User{}, constants.ErrInvaildUserOrPassword
 	}
-	return u, nil
+	return user, nil
+}
+
+func (svg *UserService) GetUserInfo(ctx context.Context, id int64) (domain.User, error) {
+	user, err := svg.repo.FindByID(ctx, id)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user, nil
+}
+
+func (svg *UserService) DeleteUser(ctx context.Context, id int64) error {
+	_, err := svg.repo.FindByID(ctx, id)
+	if err != nil {
+		return constants.ErrNotFoundUser
+	}
+	return svg.repo.DeleteByID(ctx, id)
+}
+
+func (svg *UserService) UpdateUser(ctx context.Context, id int64, u domain.User) error {
+	err := svg.repo.UpdateByID(ctx, id, u)
+	return err
 }

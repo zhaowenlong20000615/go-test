@@ -7,6 +7,7 @@ import (
 	"go-test/webook/internal/domain"
 	"go-test/webook/internal/service"
 	"net/http"
+	"strconv"
 )
 
 type UserHandler struct {
@@ -29,8 +30,8 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 }
 
 func (u *UserHandler) RegisterUser(serve *gin.Engine) {
-	serve.GET("/user/:id", u.getUserInfo)
-	serve.PUT("/user", u.addUser)
+	serve.GET("/user", u.getUserInfo)
+	serve.PUT("/register", u.addUser)
 	serve.POST("/user", u.editUser)
 	serve.DELETE("/user/:id", u.deleteUser)
 	serve.POST("login", u.login)
@@ -41,6 +42,9 @@ func (u *UserHandler) addUser(ctx *gin.Context) {
 		Email           string `json:"email"`
 		Password        string `json:"password"`
 		ConfirmPassword string `json:"confirmPassword"`
+		NICKName        string `json:"nickName"`
+		Profile         string `json:"profile"`
+		BirthDay        string `json:"birthDay"`
 	}
 	var user UserReq
 
@@ -75,6 +79,9 @@ func (u *UserHandler) addUser(ctx *gin.Context) {
 	err = u.svc.AddUser(ctx, domain.User{
 		Email:    user.Email,
 		Password: user.Password,
+		NickName: user.NICKName,
+		Profile:  user.Profile,
+		BirthDay: user.BirthDay,
 	})
 	if err != nil {
 		ctx.String(http.StatusOK, err.Error())
@@ -85,16 +92,63 @@ func (u *UserHandler) addUser(ctx *gin.Context) {
 }
 
 func (u *UserHandler) editUser(ctx *gin.Context) {
-	println("editUser")
+	type UserReq struct {
+		Id       string `json:"id"`
+		NickName string `json:"nickName"`
+		Profile  string `json:"profile"`
+		BirthDay string `json:"birthDay"`
+	}
+
+	var user UserReq
+	if err := ctx.Bind(&user); err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	var newId int64
+	if user.Id != "" {
+		newId, _ = strconv.ParseInt(user.Id, 10, 64)
+	} else {
+		session := sessions.Default(ctx)
+		sessionId := session.Get("userId").(int64)
+		newId = sessionId
+	}
+
+	err := u.svc.UpdateUser(ctx, newId, domain.User{
+		NickName: user.NickName,
+		Profile:  user.Profile,
+		BirthDay: user.BirthDay,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	ctx.String(http.StatusOK, "更新成功")
 }
 
 func (u *UserHandler) getUserInfo(ctx *gin.Context) {
-	println("getUserInfo")
-	ctx.String(http.StatusOK, "hello world")
+	session := sessions.Default(ctx)
+	userId := session.Get("userId")
+	user, err := u.svc.GetUserInfo(ctx, userId.(int64))
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
 }
 
 func (u *UserHandler) deleteUser(ctx *gin.Context) {
-	println("deleteUser")
+	id := ctx.Param("id")
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	err = u.svc.DeleteUser(ctx, intId)
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	ctx.String(http.StatusOK, "删除成功")
 }
 
 func (u *UserHandler) login(ctx *gin.Context) {
@@ -115,7 +169,6 @@ func (u *UserHandler) login(ctx *gin.Context) {
 		ctx.String(http.StatusOK, err.Error())
 		return
 	}
-
 	session := sessions.Default(ctx)
 	session.Set("userId", user.Id)
 	session.Save()
