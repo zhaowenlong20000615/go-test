@@ -9,6 +9,8 @@ import (
 	"go-test/webook/internal/web"
 	"go-test/webook/internal/web/middleware"
 	"go-test/webook/pkg"
+	"go-test/webook/pkg/ginx/middleware/ratelimit"
+	"go-test/webook/pkg/limiter"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -55,11 +57,7 @@ func initWebServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-
-	//store := cookie.NewStore([]byte("secret"))
-	//store, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
-	//serve.Use(sessions.Sessions("webook", store))
-	//serve.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/login", "/register").Build())
+	serve.Use(ratelimit.NewBuilder(limiter.NewRedisSlidingWindowLimiter(pkg.Redis.Client, time.Second, 100)).Build())
 	serve.Use(middleware.NewLoginJwtMiddlewareBuilder().IgnorePaths("/login_jwt", "/register").Build())
 	return serve
 }
