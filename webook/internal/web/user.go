@@ -204,7 +204,7 @@ func (u *UserHandler) loginJwt(ctx *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
 		Id: user.Id,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 1)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},
 	})
 	longTokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -216,7 +216,7 @@ func (u *UserHandler) loginJwt(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	pkg.Redis.Client.Set(ctx, constants.SHORT_TIME_JWT_KEY, shortToken, time.Minute*1)
+	pkg.Redis.Client.Set(ctx, constants.SHORT_TIME_JWT_KEY, shortToken, time.Hour)
 	pkg.Redis.Client.Set(ctx, shortToken, longToken, time.Hour*24*30)
 	ctx.JSON(http.StatusOK, gin.H{
 		"user":  user,

@@ -66,14 +66,14 @@ func (l *LoginJwtMiddlewareBuilder) Build() gin.HandlerFunc {
 			newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, web.UserClaims{
 				Id: claims.Id,
 				RegisteredClaims: jwt.RegisteredClaims{
-					ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 1)),
+					ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 				},
 			})
 			shortToken, err := newToken.SignedString([]byte(constants.SHORT_TIME_JWT_KEY))
 			ctx.Header("x-jwt-token", shortToken)
 			ttl, err := pkg.Redis.Client.TTL(ctx, token.Raw).Result()
 			pkg.Redis.Client.Del(ctx, token.Raw)
-			pkg.Redis.Client.Set(ctx, constants.SHORT_TIME_JWT_KEY, shortToken, time.Minute*1)
+			pkg.Redis.Client.Set(ctx, constants.SHORT_TIME_JWT_KEY, shortToken, time.Hour)
 			pkg.Redis.Client.Set(ctx, shortToken, longTokenStr, ttl)
 			ctx.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":  "100",
