@@ -4,10 +4,14 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"go-test/webook/internal/constants"
 	"go-test/webook/internal/domain"
 	"go-test/webook/internal/service"
+	"go-test/webook/pkg"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type UserHandler struct {
@@ -35,6 +39,7 @@ func (u *UserHandler) RegisterUser(serve *gin.Engine) {
 	serve.POST("/user", u.editUser)
 	serve.DELETE("/user/:id", u.deleteUser)
 	serve.POST("login", u.login)
+	serve.POST("login_jwt", u.loginJwt)
 }
 
 func (u *UserHandler) addUser(ctx *gin.Context) {
@@ -109,7 +114,7 @@ func (u *UserHandler) editUser(ctx *gin.Context) {
 		newId, _ = strconv.ParseInt(user.Id, 10, 64)
 	} else {
 		session := sessions.Default(ctx)
-		sessionId := session.Get("userId").(int64)
+		sessionId := session.Get(constants.USER_ID).(int64)
 		newId = sessionId
 	}
 
@@ -126,9 +131,9 @@ func (u *UserHandler) editUser(ctx *gin.Context) {
 }
 
 func (u *UserHandler) getUserInfo(ctx *gin.Context) {
-	session := sessions.Default(ctx)
-	userId := session.Get("userId")
-	user, err := u.svc.GetUserInfo(ctx, userId.(int64))
+	uc, _ := ctx.Get(constants.CLAIMS_KEY)
+	userId := uc.(UserClaims).Id
+	user, err := u.svc.GetUserInfo(ctx, userId)
 	if err != nil {
 		ctx.String(http.StatusOK, err.Error())
 		return
@@ -170,7 +175,57 @@ func (u *UserHandler) login(ctx *gin.Context) {
 		return
 	}
 	session := sessions.Default(ctx)
-	session.Set("userId", user.Id)
+	session.Set(constants.USER_ID, user.Id)
+	session.Options(sessions.Options{
+		MaxAge: 10,
+	})
 	session.Save()
 	ctx.String(http.StatusOK, "登录成功！")
+}
+
+func (u *UserHandler) loginJwt(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	user, err := u.svc.Login(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, err.Error())
+		return
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
+		Id: user.Id,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 1)),
+		},
+	})
+	longTokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+	})
+	shortToken, err := token.SignedString([]byte(constants.SHORT_TIME_JWT_KEY))
+	longToken, err := longTokenClaims.SignedString([]byte(constants.LONG_TIME_JWT_KEY))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	pkg.Redis.Client.Set(ctx, constants.SHORT_TIME_JWT_KEY, shortToken, time.Minute*1)
+	pkg.Redis.Client.Set(ctx, shortToken, longToken, time.Hour*24*30)
+	ctx.JSON(http.StatusOK, gin.H{
+		"user":  user,
+		"token": shortToken,
+		"msg":   "登录成功",
+	})
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Id int64
 }

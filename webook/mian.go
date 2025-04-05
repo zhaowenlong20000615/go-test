@@ -2,14 +2,13 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"go-test/webook/internal/repository"
 	"go-test/webook/internal/repository/dao"
 	"go-test/webook/internal/service"
 	"go-test/webook/internal/web"
 	"go-test/webook/internal/web/middleware"
+	"go-test/webook/pkg"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -18,6 +17,7 @@ import (
 
 func main() {
 	db := initDB()
+	initRedisDB()
 	server := initWebServer()
 	initUser(server, db)
 	server.Run(":8080")
@@ -35,6 +35,10 @@ func initDB() *gorm.DB {
 	return db
 }
 
+func initRedisDB() {
+	pkg.ConnectRedis()
+}
+
 func initWebServer() *gin.Engine {
 	serve := web.RegisterRouters()
 
@@ -42,6 +46,7 @@ func initWebServer() *gin.Engine {
 		//AllowMethods:     []string{"PUT", "PATCH"},
 		AllowHeaders:     []string{"Content-Type"},
 		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {
 				return true
@@ -51,9 +56,11 @@ func initWebServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	store := cookie.NewStore([]byte("secret"))
-	serve.Use(sessions.Sessions("webook", store))
-	serve.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/login", "/register").Build())
+	//store := cookie.NewStore([]byte("secret"))
+	//store, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+	//serve.Use(sessions.Sessions("webook", store))
+	//serve.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/login", "/register").Build())
+	serve.Use(middleware.NewLoginJwtMiddlewareBuilder().IgnorePaths("/login_jwt", "/register").Build())
 	return serve
 }
 
