@@ -13,15 +13,20 @@ import (
 	"go-test/webook/pkg/limiter"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"net/http"
 	"strings"
 	"time"
 )
 
 func main() {
-	db := initDB()
-	initRedisDB()
-	server := initWebServer()
-	initUser(server, db)
+	//db := initDB()
+	//initRedisDB()
+	//server := initWebServer()
+	//initUser(server, db)
+	server := gin.Default()
+	server.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "hello world")
+	})
 	server.Run(":8080")
 }
 
