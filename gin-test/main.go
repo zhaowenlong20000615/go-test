@@ -33,7 +33,7 @@ func main() {
 		ctx.String(http.StatusOK, "通配符路由："+params.ByName(".html"))
 	})
 
-	//go serve.Run(":8081")
+	//go server.Run(":8081")
 
 	serve.Run(":8080")
 	println("Hello Gin")
