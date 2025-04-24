@@ -1,15 +1,26 @@
 package common
 
 import (
-	"fmt"
+	"go-test/go-blog/config"
 	"go-test/go-blog/models"
+	"sync"
 )
 
+var Template models.HtmlTemplate
+
 func Load() {
-	fmt.Println()
-	template, err := models.InitHtmlTemplate("")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(template)
+	var err error
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		path := config.Config.System.CurrentDir + "\\template"
+		Template, err = models.InitHtmlTemplate(path)
+		if err != nil {
+			panic(err)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
 }

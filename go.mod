@@ -3,6 +3,7 @@ module go-test
 go 1.24.0
 
 require (
+	github.com/BurntSushi/toml v1.5.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/gin-contrib/cors v1.7.4
 	github.com/gin-contrib/sessions v1.0.2
