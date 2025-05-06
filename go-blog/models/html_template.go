@@ -1,12 +1,24 @@
 package models
 
 import (
+	"fmt"
 	"html/template"
+	"io"
 	"time"
 )
 
 type TemplatePointer struct {
 	*template.Template
+}
+
+func (t TemplatePointer) WriteData(w io.Writer, data interface{}) error {
+	err := t.Execute(w, data)
+	if err != nil {
+		if w.Write([]byte(err.Error())); err != nil {
+			fmt.Println(err)
+		}
+	}
+	return err
 }
 
 type HtmlTemplate struct {
@@ -16,11 +28,12 @@ type HtmlTemplate struct {
 	Login      TemplatePointer
 	Detail     TemplatePointer
 	Writing    TemplatePointer
+	Register   TemplatePointer
 }
 
 func InitHtmlTemplate(viewDir string) (HtmlTemplate, error) {
 	var htmlTemplate HtmlTemplate
-	tp, err := readHtmlTemplate([]string{"index", "category", "pigeonhole", "login", "detail", "writing"}, viewDir)
+	tp, err := readHtmlTemplate([]string{"index", "category", "pigeonhole", "login", "detail", "writing", "register"}, viewDir)
 	if err != nil {
 		return htmlTemplate, err
 	}
@@ -30,6 +43,7 @@ func InitHtmlTemplate(viewDir string) (HtmlTemplate, error) {
 	htmlTemplate.Login = tp[3]
 	htmlTemplate.Detail = tp[4]
 	htmlTemplate.Writing = tp[5]
+	htmlTemplate.Register = tp[6]
 	return htmlTemplate, nil
 }
 

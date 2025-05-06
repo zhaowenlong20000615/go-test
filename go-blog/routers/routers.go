@@ -7,4 +7,7 @@ import (
 
 func Routes() {
 	http.HandleFunc("/", controller.Index)
+	http.HandleFunc("/login", controller.LoginHtml)
+	http.HandleFunc("/register", controller.RegisterHtml)
+	http.Handle("/resource/", http.StripPrefix("/resource/", http.FileServer(http.Dir("public/resource"))))
 }
