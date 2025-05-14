@@ -16,3 +16,13 @@ func Register(req models.RegisterReq) (models.User, error) {
 	}
 	return models.User{Uid: int(id)}, nil
 }
+
+func Login(req models.LoginReq) (models.User, error) {
+	row := DB.QueryRow("SELECT * FROM user WHERE username=? and passwd=? LIMIT 1", req.Name, req.Passwd)
+	var user models.User
+	err := row.Scan(&user.Uid, &user.UserName, &user.Passwd, &user.Avatar, &user.CreateAt, &user.UpdateAt)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}

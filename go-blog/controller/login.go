@@ -2,10 +2,11 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-test/go-blog/common"
 	"go-test/go-blog/config"
+	"go-test/go-blog/dao"
 	"go-test/go-blog/models"
+	"go-test/go-blog/utils"
 	"io/ioutil"
 	"net/http"
 )
@@ -23,5 +24,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.Unmarshal(all, &params)
-	fmt.Printf("params: %#v\n", params)
+	params.Passwd = utils.Md5Crypt(params.Passwd)
+	user, err := dao.Login(params)
+	if err != nil {
+		common.Error(w, err)
+		return
+	}
+	common.Success(w, user)
 }
