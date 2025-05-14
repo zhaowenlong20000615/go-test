@@ -77,6 +77,35 @@ function loginLogic() {
       },
     });
   });
+
+  // 注册
+  $(".register-submint").click(function () {
+    var tipEle = $(".login-tip");
+    var name = $(".login-name").val();
+    var passwd = $(".login-passwd").val();
+    if (!name) return tipEle.show().text("请输入用户名");
+    if (!passwd) return tipEle.show().text("请输入密码");
+
+
+    $.ajax({
+      url: "/api/v1/register",
+      data: JSON.stringify({ username: name, passwd: passwd }),
+      contentType: "application/json",
+      type: "POST",
+      success: function (res) {
+        if (res.code !== 200) {
+          return tipEle.show().text(res.error);
+        }
+        location.href = "/login";
+      },
+      error: function (err) {
+        console.log("err", err);
+        tipEle.show().text("登录错误，请重试");
+      },
+    });
+  });
+
+
   // 退出登录
   $(".login-out").click(function () {
     localStorage.removeItem(USER_KEY);

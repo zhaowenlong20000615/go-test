@@ -311,7 +311,7 @@ header {
   font-size: 12px;
   display: none;
 }
-.login-submint {
+.login-submint, .register-submint{
   border: 0;
   background: #448ef6;
   height: 36px;
