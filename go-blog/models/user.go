@@ -16,6 +16,6 @@ type RegisterReq struct {
 	Passwd string `p:"passwd" v:"required|length:6,255#请输入密码|密码长度不够"`
 }
 type LoginReq struct {
-	Name   string
-	Passwd string
+	Name   string `json:"username"`
+	Passwd string `json:"passwd"`
 }
