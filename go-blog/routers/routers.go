@@ -12,5 +12,6 @@ func Routes() {
 	http.HandleFunc("/writing", controller.WriteHtml)
 	http.HandleFunc("/api/v1/login", controller.Login)
 	http.HandleFunc("/api/v1/register", controller.Register)
+	http.HandleFunc("/api/v1/post", controller.AddOrUpdate)
 	http.Handle("/resource/", http.StripPrefix("/resource/", http.FileServer(http.Dir("public/resource"))))
 }
