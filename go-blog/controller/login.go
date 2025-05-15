@@ -9,6 +9,7 @@ import (
 	"go-test/go-blog/utils"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func LoginHtml(w http.ResponseWriter, r *http.Request) {
@@ -30,5 +31,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		common.Error(w, err)
 		return
 	}
-	common.Success(w, user)
+	token, err := utils.CrateToken(user, time.Hour*24*7)
+	if err != nil {
+		common.Error(w, err)
+		return
+	}
+	var ret = models.LoginRes{UserInfo: user, Token: token}
+	common.Success(w, ret)
 }

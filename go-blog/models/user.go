@@ -11,6 +11,11 @@ type User struct {
 	UpdateAt time.Time `json:"updateAt"` // 创建时间
 }
 
+type LoginRes struct {
+	UserInfo User   `json:"userInfo"`
+	Token    string `json:"token"`
+}
+
 type RegisterReq struct {
 	Name   string `json:"username"`
 	Passwd string `p:"passwd" v:"required|length:6,255#请输入密码|密码长度不够"`

@@ -56,15 +56,15 @@ function loginLogic() {
     if (!passwd) return tipEle.show().text("请输入密码");
 
     // md5加密
-    var MD5Passwd = new Hashes.MD5().hex(passwd + SALT);
+    // var MD5Passwd = new Hashes.MD5().hex(passwd + SALT);
     $.ajax({
       url: "/api/v1/login",
-      data: JSON.stringify({ username: name, passwd: MD5Passwd }),
+      data: JSON.stringify({ username: name, passwd }),
       contentType: "application/json",
       type: "POST",
       success: function (res) {
           if (res.code !== 200) {
-            return tipEle.show().text(res.error);
+            return tipEle.show().text(res.msg);
           }
           var data = res.data || {};
           localStorage.setItem(TOKEN_KEY, data.token);
@@ -94,7 +94,7 @@ function loginLogic() {
       type: "POST",
       success: function (res) {
         if (res.code !== 200) {
-          return tipEle.show().text(res.error);
+          return tipEle.show().text(res.msg);
         }
         location.href = "/login";
       },
@@ -142,7 +142,7 @@ function deleteDetail(id) {
     type: "DELETE",
     contentType: "application/json",
     success: function (res) {
-      if (res.code != 200) alert(res.error);
+      if (res.code != 200) alert(res.msg);
       location.href = "/";
     },
     beforeSend: setAjaxToken,
@@ -224,7 +224,7 @@ function initSearch() {
       url: "/api/v1/post/search?val=" + val,
       contentType: "application/json",
       success: function (res) {
-        if (res.code !== 200) return alert(res.error);
+        if (res.code !== 200) return alert(res.msg);
         var data = res.data || [];
         searchList = [];
         if (data.length === 0) return drop.html("");

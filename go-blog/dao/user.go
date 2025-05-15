@@ -20,7 +20,7 @@ func Register(req models.RegisterReq) (models.User, error) {
 func Login(req models.LoginReq) (models.User, error) {
 	row := DB.QueryRow("SELECT * FROM user WHERE username=? and passwd=? LIMIT 1", req.Name, req.Passwd)
 	var user models.User
-	err := row.Scan(&user.Uid, &user.UserName, &user.Passwd, &user.Avatar, &user.CreateAt, &user.UpdateAt)
+	err := row.Scan(&user.Uid, &user.UserName, &user.Avatar, &user.Passwd, &user.CreateAt, &user.UpdateAt)
 	if err != nil {
 		return models.User{}, err
 	}
