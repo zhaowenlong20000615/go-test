@@ -2,17 +2,18 @@ package utils
 
 import (
 	"github.com/golang-jwt/jwt/v5"
+	"go-test/go-blog/models"
 	"time"
 )
 
 type MyCustomClaims struct {
-	User interface{} `json:"user"`
+	User models.User `json:"user"`
 	jwt.RegisteredClaims
 }
 
 const JWT_KEY = "token"
 
-func CrateToken(user interface{}, expireTime time.Duration) (string, error) {
+func CrateToken(user models.User, expireTime time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
 		User: user,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -38,7 +39,6 @@ func ParseToken(tokenString string) (*MyCustomClaims, error) {
 		return nil, nil
 	}
 	claims, ok := jwtToken.Claims.(*MyCustomClaims)
-	println(claims)
 	if ok && jwtToken.Valid {
 		return claims, nil
 	}

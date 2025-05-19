@@ -1,12 +1,15 @@
 package controller
 
 import (
-	"fmt"
+	"encoding/json"
 	"go-test/go-blog/common"
 	"go-test/go-blog/config"
 	"go-test/go-blog/dao"
+	"go-test/go-blog/models"
 	"go-test/go-blog/utils"
+	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func WriteHtml(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +40,25 @@ func addArticle(w http.ResponseWriter, r *http.Request) {
 		common.Error(w, err)
 		return
 	}
-	fmt.Printf("token:%+v\n", claims)
+	post := models.PostReq{}
+	post.UserId = claims.User.Uid
+	all, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		common.Error(w, err)
+	}
+	ts := struct {
+		CategoryId string `json:"categoryId"`
+	}{}
+	json.Unmarshal(all, &ts)
+	json.Unmarshal(all, &post)
+	atoi, err := strconv.Atoi(ts.CategoryId)
+	post.CategoryId = atoi
+	savePost, err := dao.SavePost(post)
+	if err != nil {
+		common.Error(w, err)
+		return
+	}
+	common.Success(w, savePost)
 }
 
 func updateArticle(w http.ResponseWriter, r *http.Request) {
