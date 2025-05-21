@@ -20,14 +20,20 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		common.Error(w, err)
 		return
 	}
+	total := len(posts)
+	pagesLen := (total / query.PageSize) + 1
+	var pages []int
+	for i := 0; i < pagesLen; i++ {
+		pages = append(pages, i+1)
+	}
 	homeData := models.HomeData{
 		Viewer:    config.Config.Viewer,
 		Categorys: categorys,
 		Posts:     posts,
-		Total:     0,
-		Page:      0,
-		Pages:     nil,
-		PageEnd:   false,
+		Total:     total,
+		Page:      query.Page,
+		Pages:     pages,
+		PageEnd:   query.Page != pagesLen,
 	}
 	indexTemplate.WriteData(w, homeData)
 }
