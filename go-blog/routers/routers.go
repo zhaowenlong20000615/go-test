@@ -10,6 +10,7 @@ func Routes() {
 	http.HandleFunc("/login", controller.LoginHtml)
 	http.HandleFunc("/register", controller.RegisterHtml)
 	http.HandleFunc("/writing", controller.WriteHtml)
+	http.HandleFunc("/p/", controller.ArticleDetail)
 	http.HandleFunc("/api/v1/login", controller.Login)
 	http.HandleFunc("/api/v1/register", controller.Register)
 	http.HandleFunc("/api/v1/post", controller.AddOrUpdate)
